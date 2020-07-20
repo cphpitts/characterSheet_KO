@@ -1,0 +1,57 @@
+﻿@{ ViewBag.Title = "Home page"; }
+<script src="~/Scripts/jquery-3.4.1.js" type="text/javascript"></script>
+<script src="~/Scripts/knockout-3.5.0.js" type="text/javascript"></script>
+
+
+<h3>Details</h3>
+
+<p>First Name: <span data-bind="text: firstName"></span></p>
+<p>FirstName: <input data-bind="value: firstName" /></p>
+
+<p>Last Name: <span data-bind="text: lastName"></span></p>
+<p>Last Name: <input data-bind="value: lastName" /></p>
+
+<p>Full Name: <span data-bind="text: fullName"></span></p>
+
+<h2>Friends: <span data-bind="text: friends().length"></span></h2>
+<ul data-bind="template: { name: 'friendsTemplate', foreach: friends }"></ul>
+
+<script id="friendsTemplate" type="text/html">
+    <li>
+        <input data-bind="value: name">
+        <button data-bind="click: removeFriend">Remove</button>
+
+        <label><input type="checkbox" data-bind="checked: isOnTwitter" />Is on twitter </label>
+        <input data-bind="value: twitterName, visible: isOnTwitter" />
+    </li>
+</script>
+
+<button data-bind="click: addFriend, enable: friends().length < 5">Add Friend</button>
+
+<script type="text/javascript">
+    function friend(name) {
+        return {
+            name: ko.observable(name),
+            isOnTwitter: ko.observable(false),
+            twitterName: ko.observable(),
+            removeFriend: function () {
+                viewModel.friends.remove(this);
+            }
+        };
+    }
+
+    var viewModel = {
+        firstName: ko.observable("Bert"),
+        lastName: ko.observable("Smith"),
+        friends: ko.observableArray([new friend("Steve"), new friend("Annie")]),
+        addFriend: function () {
+            this.friends.push(new friend("Another"))
+        }
+    };
+
+    viewModel.fullName = ko.dependentObservable(function () {
+        return this.firstName() + " " + this.lastName();
+    }, viewModel);
+
+    ko.applyBindings(viewModel);
+</script>

@@ -1,0 +1,298 @@
+﻿@{  ViewBag.Title = "Character Sheet - KnockoutJS Demo"; }
+
+
+@*<script src="~/Scripts/knockout-3.5.0.js"></script>*@
+
+
+<div class="container mt-5 text-datk">
+    <div class="row">
+        <div class="col-sm">
+            <label> Character Name: </label>
+            <input class="card w-100 form-control" data-bind="name" />
+        </div>
+        <div class="col-sm">
+            <div class="row">
+                <div class="form-group col-sm">
+                    <label for="raceInput">Race</label>
+                    <select id="raceInput" class="form-control" data-bind="options: raceOptions, value: race, optionsText: 'name'" ></select>
+                </div>
+                <div class="form-group col-sm">
+                    <label for="classInput">Class</label>
+                    <input id="classInput" class="form-control" data-bind="class" />
+                </div>
+                <div class="form-group col-2">
+                    <label for="levelInput">Level</label>
+                    <input id="levelInput" class="form-control w-100" data-bind="level" />
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    @* Attributes *@
+    <div class="row my-4" data-bind="foreach: attributes">
+        <div class="col text-center">
+            <div class="font-weight-bold text-uppercase text-primary" data-bind="text:name"></div>
+            <input class="form-control w-50 text-center mx-auto" data-bind="value:value"/>
+            <div data-bind="text:modifier"></div>
+        </div>
+    </div>
+
+    <div class="row">
+        @* SKills *@
+        <div class="col-3 border-right border-warning">
+            <h3 class="bg-warning text-light text-center pb-1">Skills</h3>
+            <div data-bind="foreach: skills">
+                <div class="m-1 py-1 row border-bottom border-warning">
+                    <div class="col-2 float-left text-right" data-bind="text:value"></div>
+                    <div class="col-7 p-0 float-left" data-bind="text: name"></div>
+                    <div class="col float-left text-muted"  data-bind="text: attributeDisplay"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col">
+            @* Other Stats *@
+            <div class="row">
+                <div class="col text-center">
+                    <div class="font-weight-bold text-uppercase text-primary">Hit Points</div>
+                    <div class="w-50 text-center mx-auto" data-bind="text: hitPoints"></div>
+                </div>
+                <div class="col text-center">
+                    <div class="font-weight-bold text-uppercase text-primary">Armor Class</div>
+                    <div class="w-50 text-center mx-auto" data-bind="text: armorClass"></div>
+                </div>
+                <div class="col text-center">
+                    <div class="font-weight-bold text-uppercase text-primary">Speed</div>
+                    <div class="w-50 text-center mx-auto" data-bind="text: speed"></div>
+                </div>
+                <div class="col text-center">
+                    <div class="font-weight-bold text-uppercase text-primary">Initiative</div>
+                    <div class="w-50 text-center mx-auto" data-bind="text: initiative"></div>
+                </div>
+            </div>
+
+            @* Weapons *@
+            <div class="row">
+                <div class="col">
+                    <h3 class="bg-danger text-center pb-1 text-light">Weapons</h3>
+                    <div class="row border-bottom mb-1">
+                        <div class="col text-center py-1">Weapon Name</div>
+                        <div class="col text-center py-1">Attribute</div>
+                        <div class="col text-center py-1">Attack Bonus</div>
+                        <div class="col text-center py-1">Damage Roll</div>
+                    </div>
+                    <div data-bind="foreach: weapons">
+                        <div class="row ml-1 border-bottom mb-1">
+                            <select class="col float-left form-control" data-bind="options: weaponOptions, value: weapon, optionsText: 'name'"></select>
+                            <div class="col text-center py-1" data-bind="text: attribute"></div>
+                            <div class="col text-center py-1" data-bind="text:atkBonus"></div>
+                            <div class="col text-center py-1" data-bind="text:dmgRoll"></div>
+                        </div>
+                    </div>
+                    <button data-bind="click: addWeapon">Add Weapon</button>
+                </div>
+            </div>
+
+            @* Armor *@
+            <div class="row mt-3">
+                <div class="col">
+                    <h3 class="bg-danger text-center pb-1 text-light">Armor</h3>
+                    <div class="row border-bottom mb-1">
+                        <div class="col text-center py-1">Armor Type</div>
+                        <div class="col text-center py-1">Armor Class</div>
+                        <div class="col text-center py-1">Notes</div>
+                    </div>
+                    <div data-bind="foreach: armorInfo">
+                        <div class="row ml-1 border-bottom mb-1">
+                            <select class="col float-left form-control" data-bind="options: armorOptions, value: armor, optionsText:'name'"></select>
+                            <div class="col text-center py-1" data-bind="text: ac"></div>
+                            <div class="col text-center py-1" data-bind="text: notes"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+
+    </div>
+</div>
+
+
+<script>
+    function CharacterViewModel() {
+        var self = this;
+        self.name = ko.observable();
+        self.race = ko.observable();
+        self.level = ko.observable();
+        self.class = ko.observable();
+        self.profBonus = 2;
+
+        //Todo: convert to observable based on class selection
+        self.hitPoints = 5; 
+
+        self.attributes = $.map(charAttributes, function (name) { return new Attribute(name) });
+        self.skills = $.map(charSkills, function (skill) { return new Skill(skill) });
+
+        // Weapon Selection and Information
+        self.weaponOptions = [
+            { name: "Dagger", attribute: "Finesse", damageDice: "1d4", damageType: "piercing" },
+            { name: "Greatsword", attribute: "Strength", damageDice: "2d6", damageType: "slashing" },
+            { name: "Longbow", attribute: "Dexterity", damageDice: "1d8", damageType: "piercing" }
+        ];
+        self.weapons = ko.observableArray([new Weapon(self.weaponOptions[0])]);
+        self.addWeapon = function () {
+            self.weapons.push(new Weapon(self.weaponOptions[0]));
+        }
+
+        // Armor Selection and Information
+        self.armorOptions = [
+            { name: "Leather Armor", acValue: 11, dexMax: 100, stealthDisadvantage: false },
+            { name: "Scale Mail", acValue: 13, dexMax: 2, stealthDisadvantage: true },
+            { name: "Chain Mail", acValue: 14, dexmax: "none", stealthDisadvantage: true }
+        ];
+        self.armorInfo = ko.observableArray([new Armor(self.armorOptions[0])]);
+        self.armorClass = ko.computed(function () {
+            return self.armorInfo()[0].ac();
+        }, this);
+
+        // Race Information
+        self.raceOptions = [
+            { name: "Human", speed: 35, statMod: [1, 1, 1, 1, 1, 1] },
+            { name: "Elf", speed: 30, statMod: [0, 0, 2, 1, 0, 0] },
+            { name: "Dwarf", speed: 25, statMod: [2, 2, 0, 0, 0, 0] }
+        ];
+        self.raceInfo = ko.observableArray([new RaceStats(self.raceOptions[0])]);
+
+        // Other Character Information
+            // Initiative Based on Character Attributes
+        self.initiative = ko.computed(function () {
+            return self.attributes.find(x => x.name === "Dexterity").modifier();
+        }, this);
+
+            // Speed based on Race Selection
+        self.speed = ko.computed(function () {
+            return self.raceInfo()[0].speed();
+        }, this);
+    };
+
+
+    // Define race-based stats
+    function RaceStats(race) {
+        this.race = ko.observable(race);
+        this.speed = ko.computed(function () {
+            return this.race().speed;
+        }, this);
+    }
+
+    // Define attribute array
+    function Attribute(name) {
+        this.name = name,
+        this.value = ko.observable(10),
+        this.modifier = ko.computed(function () {
+            return Math.floor((this.value() - 10) / 2);
+        }, this);
+    }
+
+    // Define Skills
+    function Skill(skill) {
+        this.name = skill.name;
+        this.attribute = skill.attribute;
+        this.attributeDisplay = "(" + this.attribute.substring(0, 3) + ")";
+        this.proficiency = false;
+        this.value = ko.computed(function () {
+            if (this.proficiency) {
+                var profBonus = self.profBonus;
+            } else {
+                var profBonus = 0;
+            }
+            var attr = this.attribute;
+            return parseInt(self.attributes.find(x => x.name === this.attribute).modifier()) + profBonus;
+        }, this);
+    }
+
+    // Define weapon stats
+    function Weapon(weapon) {
+        this.weapon = ko.observable(weapon);
+        this.attribute = ko.computed(function () {
+            var attr = this.weapon().attribute;
+            if (attr == "Finesse") {
+                if (self.attributes.find(x => x.name === "Dexterity").value() < self.attributes.find(x => x.name === "Strength").value()) {
+                    return "Strength";
+                } else {
+                    return "Dexterity";
+                }
+            } else {
+                return attr;
+            };
+            return this.weapon().attribute;
+        }, this);
+
+        this.atkBonus = ko.computed(function () {
+            return self.attributes.find(x => x.name === this.attribute()).modifier() + self.profBonus;
+        }, this);
+
+        this.dmgRoll = ko.computed(function () {
+            return this.weapon().damageDice + "+" + self.attributes.find(x => x.name === this.attribute()).modifier();
+        }, this);
+    };
+
+    // Define weapone information
+    function Armor(armor) {
+        this.armor = ko.observable(armor);
+        this.ac = ko.computed(function () {
+            var maxDex = this.armor().dexMax;
+            var dexMod = self.attributes.find(x => x.name === "Dexterity").modifier()
+            var acBase = parseFloat(this.armor().acValue);
+            if (maxDex == "none") {
+                return acBase;
+            } else if (dexMod > maxDex) {
+                return maxDex + acBase;
+            } else {
+                return dexMod + acBase;
+            }
+        }, this);
+
+        this.notes = ko.computed(function () {
+            if (this.armor().stealthDisadvantage) {
+                return "Disadvantage on Stealth";
+            } else {
+                return "-"
+            }
+        }, this);
+    };
+
+    // Attributes Array
+    charAttributes = ["Strength", "Constitution", "Dexterity", "Wisdom", "Intelligence", "Charisma"];
+
+    // Skills and relevant Attributes
+    charSkills = [
+        { name: "Acrobatics", attribute: "Dexterity" },
+        { name: "Animal Handling", attribute: "Wisdom" },
+        { name: "Arcana", attribute: "Intelligence" },
+        { name: "Atheltics", attribute: "Strength" },
+        { name: "Deception", attribute: "Charisma" },
+        { name: "History", attribute: "Intelligence" },
+        { name: "Insight", attribute: "Wisdom" },
+        { name: "Intimidation", attribute: "Charisma" },
+        { name: "Investigation", attribute: "Intelligence" },
+        { name: "Medicine", attribute: "Wisdom" },
+        { name: "Nature", attribute: "Intelligence" },
+        { name: "Perception", attribute: "Wisdom" },
+        { name: "Performance", attribute: "Charisma" },
+        { name: "Persuasion", attribute: "Charisma" },
+        { name: "Religion", attribute: "Intelligence" },
+        { name: "Sleight of Hand", attribute: "Dexterity" },
+        { name: "Stealth", attribute: "Dexterity" },
+        { name: "Survival", attribute: "Wisdom" }
+    ];
+
+    // Weapon stats
+    charWeapons = {
+        dagger: { name: "Dagger", attribute: "Finesse", damageDice: "1d4", damageType: "piercing" },
+        greatsword: { name: "Greatsword", attribute: "Strength", damageDice: "2d6", damageType: "slashing" },
+        longbow: { name: "Longbow", attribute: "Dexterity", damageDice: "1d8", damageType: "piercing" }
+    }
+
+    ko.applyBindings(CharacterViewModel);
+
+</script>
